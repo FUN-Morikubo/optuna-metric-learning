@@ -1,0 +1,10 @@
+{
+    "dim": 500,
+
+    "n_fold": 4,
+    "data_dir": "/data_ssd/reid_dataset",
+    "data_per_epoch": 100000,
+
+    "m_cands": [2, 4, 8, 16],
+    "batch_size": 64
+}
