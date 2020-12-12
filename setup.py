@@ -6,7 +6,10 @@ requirements=[
     "pytorch-metric-learning",
     "radam @ git+https://github.com/LiyuanLucasLiu/RAdam.git",
     "sklearn",
-    "torchvision"
+    "torchvision",
+    "record-keeper",
+    "tensorboard",
+    "faiss-cpu"
 ]
 
 setup(
