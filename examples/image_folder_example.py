@@ -102,7 +102,7 @@ def get(conf, trial):
 
         loss_types = list(ALL_LOSSES.keys())
         #loss_type = trial.suggest_categorical("loss_type", loss_types)
-        loss_type = "Contrastive"
+        loss_type = conf["loss_type"]
         metric_loss_info = ALL_LOSSES[loss_type](trial,
             num_classes=len(labels), embedding_size=conf["dim"])
         if "param" in metric_loss_info:
