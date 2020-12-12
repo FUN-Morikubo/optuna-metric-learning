@@ -33,8 +33,9 @@ def get(conf, trial):
     for dirname in label_dirnames:
         label = dirname.split(os.path.sep)[-1]
         labels.append(label)
+    labels = sorted(labels)
     def dataset_fold_generator(all=False):
-        folds = KFold(n_splits=conf["n_fold"], shuffle=True)
+        folds = KFold(n_splits=conf["n_fold"], shuffle=True, random_state=1234)
         dummy = np.arange(len(labels), dtype=np.int32)[:, np.newaxis]
         for train_lab, dev_lab in list(folds.split(dummy))[:2]:
             train_lab = set([labels[_] for _ in train_lab])

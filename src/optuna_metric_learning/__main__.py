@@ -21,6 +21,7 @@ parser.add_argument("--patience", type=int, default=1)
 parser.add_argument("--n-trials", type=int, default=100)
 
 parser.add_argument("--log-dir", type=str, default="./optuna_metric_learning")
+parser.add_argument("--db-name", type=str, default=None)
 parser.add_argument("--study-name", type=str, default="metric_learning")
 
 args = parser.parse_args()
@@ -77,7 +78,10 @@ def objective(trial):
 
 
 os.makedirs(args.log_dir, exist_ok=True)
-_storage_fn = f"sqlite:///{args.log_dir}/optuna.sqlite3".replace("/", os.path.sep)
+if args.db_name is None:
+    _storage_fn = f"sqlite:///{args.log_dir}/optuna.sqlite3".replace("/", os.path.sep)
+else:
+    _storage_fn = args.db_name
 study = optuna.create_study(
     study_name=args.study_name,
     storage=_storage_fn,
