@@ -20,6 +20,8 @@ parser.add_argument("--max-epoch", type=int, default=40)
 parser.add_argument("--patience", type=int, default=1)
 parser.add_argument("--n-trials", type=int, default=100)
 
+parser.add_argument("--sampler", type=str, choices=["Default", "Random"])
+
 parser.add_argument("--log-dir", type=str, default="./optuna_metric_learning")
 parser.add_argument("--db-name", type=str, default=None)
 parser.add_argument("--study-name", type=str, default="metric_learning")
@@ -82,10 +84,17 @@ if args.db_name is None:
     _storage_fn = f"sqlite:///{args.log_dir}/optuna.sqlite3".replace("/", os.path.sep)
 else:
     _storage_fn = args.db_name
+
+if args.sampler == "Default":
+    sampler = None
+elif args.sampler == "Random":
+    sampler = optuna.samplers.RandomSampler()
+
 study = optuna.create_study(
     study_name=args.study_name,
     storage=_storage_fn,
     load_if_exists=True,
-    direction="maximize"
+    direction="maximize",
+    sampler=sampler
 )
 study.optimize(objective, n_trials=args.n_trials)
