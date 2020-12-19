@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import import_module
 import json
 import os
@@ -11,20 +11,25 @@ from pytorch_metric_learning.utils import common_functions
 import pytorch_metric_learning.utils.logging_presets as logging_presets
 from radam import RAdam
 
-parser = ArgumentParser()
+parser = ArgumentParser(
+    formatter_class=ArgumentDefaultsHelpFormatter,
+    description="Optimize hyperparameters of metric learning using optuna.",
+    add_help=True
+)
 
-parser.add_argument("--conf", type=str, required=True)
-parser.add_argument("--model-def-fn", type=str, required=True)
+parser.add_argument("--conf", type=str, required=True, help="Configuration file.")
+parser.add_argument("--model-def-fn", type=str, required=True, help="Model definition file.")
 
-parser.add_argument("--max-epoch", type=int, default=40)
-parser.add_argument("--patience", type=int, default=1)
-parser.add_argument("--n-trials", type=int, default=100)
+parser.add_argument("--max-epoch", type=int, default=40, help="Maximum number of epochs per trial.")
+parser.add_argument("--patience", type=int, default=1, help="Stop training if `epoch - best_epoch > patience`.")
+parser.add_argument("--n-trials", type=int, default=100, help="Number of trials.")
 
-parser.add_argument("--sampler", type=str, choices=["Default", "Random"])
+parser.add_argument("--sampler", type=str, choices=["Default", "Random"], help="Optuna sampler.")
 
-parser.add_argument("--log-dir", type=str, default="./optuna_metric_learning")
-parser.add_argument("--db-name", type=str, default=None)
-parser.add_argument("--study-name", type=str, default="metric_learning")
+parser.add_argument("--log-dir", type=str, default="./optuna_metric_learning", help="Directory name to save logging information.")
+parser.add_argument("--db-name", type=str, default=None, 
+    help="Database to store results of each trials. If None, sqlite3 database file,`optuna.sqlite3` will be created at --log-dir.")
+parser.add_argument("--study-name", type=str, default="metric_learning", help="Study name.")
 
 args = parser.parse_args()
 
