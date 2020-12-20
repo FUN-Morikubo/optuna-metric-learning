@@ -60,7 +60,7 @@ Arguments of `get(conf, trial)` function are:
 * `conf`
   - a dictionary which is loaded from JSON file which is specified by `--conf` option.
 * `trial`
-  - a trial object of optuna library. See [optuna documentation](https://optuna.readthedocs.io/en/stable/reference/trial.html) for more details.
+  - a trial object of optuna library. You can sample hyperparameter values using this instance. See [optuna documentation](https://optuna.readthedocs.io/en/stable/reference/trial.html) for more details.
 
 Return value of `get(conf, trial)` function is:
 
@@ -73,3 +73,5 @@ Return value of `get(conf, trial)` function is:
       - `train_dataset`, `dev_dataset` are PyTorch Dataset instance.
       - `train_sampler` is a sampler which is passed to Trainer instance of pytorch metric learning.
       - `batch_size` is a batch size during training.
+
+#### 
