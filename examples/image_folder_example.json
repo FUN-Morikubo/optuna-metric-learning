@@ -1,11 +1,21 @@
 {
+    "": [
+        "Available trunk_models:",
+        "ResNet-18, ResNet-34, ResNet-50, ResNet-101, ResNet-152"
+    ],
+    "trunk_model": "ResNet-18",
     "dim": 500,
 
+    "": "Split dataset into n_fold folds, and only use fold_trials folds during a trial.",
     "n_fold": 4,
+    "fold_trials": 2,
+
     "data_dir": "/data_ssd/reid_dataset",
     "data_per_epoch": 100000,
 
     "m_cands": [2, 4, 8, 16],
     "batch_size": 64,
-    "loss_type": "Contrastive"
+
+    "": "Available loss_types: Contrastive, Triplet, ArcFace, ProxyNCA",
+    "loss_type": "Triplet"
 }

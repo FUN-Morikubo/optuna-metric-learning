@@ -1,5 +1,6 @@
 from glob import glob
 import os
+import re
 
 import numpy as np
 from pytorch_metric_learning import samplers
@@ -37,7 +38,7 @@ def get(conf, trial):
     def dataset_fold_generator(all=False):
         folds = KFold(n_splits=conf["n_fold"], shuffle=True, random_state=1234)
         dummy = np.arange(len(labels), dtype=np.int32)[:, np.newaxis]
-        for train_lab, dev_lab in list(folds.split(dummy))[:2]:
+        for train_lab, dev_lab in list(folds.split(dummy))[:conf["fold_trials"]]:
             train_lab = set([labels[_] for _ in train_lab])
             dev_lab = set([labels[_] for _ in dev_lab])
 
@@ -62,7 +63,9 @@ def get(conf, trial):
     
     # MODEL, OPTIMIZER & LOSS
     def model_generator():
-        trunk = models.resnet18(pretrained=True)
+        if conf["trunk_model"] in ["ResNet-18", "ResNet-34", "ResNet-50", "ResNet-101", "ResNet-152"]:
+            depth = re.match("ResNet-(?P<depth>[0-9]+)", conf["trunk_model"]).group("depth")
+            trunk = eval(f"models.resnet{depth}(pretrained=True)")
         trunk_output_size = trunk.fc.in_features
         trunk.fc = nn.Identity()
 
@@ -77,7 +80,7 @@ def get(conf, trial):
 
         model_dict = {"trunk": trunk, "embedder": embedder}
 
-        lr = trial.suggest_loguniform("model_lr", 1e-5, 1e-1)
+        lr = trial.suggest_loguniform("model_lr", 1e-5, 1e-2)
         decay = trial.suggest_loguniform("model_decay", 1e-10, 1e-2)
         # beta1 = 1. - trial.suggest_loguniform("model_beta1", 1e-3, 1.)
         # beta2 = 1. - trial.suggest_loguniform("model_beta2", 1e-4, 1.)
@@ -100,14 +103,12 @@ def get(conf, trial):
                     )
         }
 
-        loss_types = list(ALL_LOSSES.keys())
-        #loss_type = trial.suggest_categorical("loss_type", loss_types)
         loss_type = conf["loss_type"]
         metric_loss_info = ALL_LOSSES[loss_type](trial,
             num_classes=len(labels), embedding_size=conf["dim"])
         if "param" in metric_loss_info:
             # Add optimizer for loss
-            lr = trial.suggest_loguniform("loss_lr", 1e-5, 1e-1)
+            lr = trial.suggest_loguniform("loss_lr", 1e-5, 1e-2)
             # beta1 = 1. - trial.suggest_loguniform("loss_beta1", 1e-3, 1.)
             # beta2 = 1. - trial.suggest_loguniform("loss_beta2", 1e-4, 1.)
             # eps = trial.suggest_loguniform("loss_eps", 1e-10, 1e-5)
