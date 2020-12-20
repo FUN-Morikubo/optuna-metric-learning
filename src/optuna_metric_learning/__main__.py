@@ -24,7 +24,8 @@ parser.add_argument("--max-epoch", type=int, default=40, help="Maximum number of
 parser.add_argument("--patience", type=int, default=1, help="Stop training if `epoch - best_epoch > patience`.")
 parser.add_argument("--n-trials", type=int, default=100, help="Number of trials.")
 
-parser.add_argument("--sampler", type=str, choices=["Default", "Random"], help="Optuna sampler.")
+parser.add_argument("--sampler", type=str, choices=["Default", "Random"], 
+    default="Default", help="Optuna sampler.")
 
 parser.add_argument("--log-dir", type=str, default="./optuna_metric_learning", help="Directory name to save logging information.")
 parser.add_argument("--db-name", type=str, default=None, 
