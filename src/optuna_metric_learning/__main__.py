@@ -1,11 +1,14 @@
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import import_module
 import json
+import logging
 import os
 import sys
+import traceback
 
 import numpy as np
 import optuna
+import torch
 from pytorch_metric_learning import trainers, testers
 from pytorch_metric_learning.utils import common_functions
 import pytorch_metric_learning.utils.logging_presets as logging_presets
@@ -27,12 +30,19 @@ parser.add_argument("--n-trials", type=int, default=100, help="Number of trials.
 parser.add_argument("--sampler", type=str, choices=["Default", "Random"], 
     default="Default", help="Optuna sampler.")
 
-parser.add_argument("--log-dir", type=str, default="./optuna_metric_learning", help="Directory name to save logging information.")
+parser.add_argument("--log-dir", type=str, default="./optuna_metric_learning", help="Directory name to save logging information. NOTE: Use an unique name for each different optimization.")
 parser.add_argument("--db-name", type=str, default=None, 
     help="Database to store results of each trials. If None, sqlite3 database file,`optuna.sqlite3` will be created at --log-dir.")
 parser.add_argument("--study-name", type=str, default="metric_learning", help="Study name.")
 
 args = parser.parse_args()
+
+os.makedirs(args.log_dir, exist_ok=True)
+logger = logging.getLogger()
+logger.addHandler(logging.FileHandler(os.path.join(args.log_dir, "optuna.log"), mode="w"))
+
+optuna.logging.enable_propagation()
+optuna.logging.disable_default_handler()
 
 # Load model, optimizer & dataset constructor
 with open(args.conf) as h:
@@ -84,8 +94,6 @@ def objective(trial):
         metrics.append(max(rslt["mean_average_precision_at_r_level0"]))
     return np.mean(metrics)
 
-
-os.makedirs(args.log_dir, exist_ok=True)
 if args.db_name is None:
     _storage_fn = f"sqlite:///{args.log_dir}/optuna.sqlite3".replace("/", os.path.sep)
 else:
@@ -103,4 +111,20 @@ study = optuna.create_study(
     direction="maximize",
     sampler=sampler
 )
-study.optimize(objective, n_trials=args.n_trials)
+
+counter_trials = sum([1 for trial in study.trials if trial.state==optuna.trial.TrialState.COMPLETE])
+print(f"{counter_trials} trials have been already completed.")
+if counter_trials >= args.n_trials:
+    print("Already finished. Exit.")
+    sys.exit(0)
+while True:
+    try:
+        study.optimize(objective, n_trials=1)
+    except Exception as err:
+        continue
+
+    counter_trials = sum([1 for trial in study.trials if trial.state==optuna.trial.TrialState.COMPLETE])
+    if counter_trials < args.n_trials:
+        continue
+    else:
+        break
