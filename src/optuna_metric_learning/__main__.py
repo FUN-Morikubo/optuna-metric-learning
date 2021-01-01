@@ -14,6 +14,22 @@ from pytorch_metric_learning.utils import common_functions
 import pytorch_metric_learning.utils.logging_presets as logging_presets
 from radam import RAdam
 
+class SubsetFixTrialWrapper(): 
+    def __init__(self, trial, fix_params): 
+        self._OML_fix_params = fix_params 
+        self._OML_trial = trial 
+     
+    def __getattr__(self, func_name): 
+        if func_name.startswith("suggest"): 
+            def _tmp(name, *args): 
+                if name in self._OML_fix_params: 
+                    return self._OML_trial.suggest_categorical(name, [self._OML_fix_params[name]]) 
+                else: 
+                    return getattr(self._OML_trial, func_name)(name, *args) 
+            return _tmp 
+        else: 
+            return getattr(self._OML_trial, func_name) 
+
 parser = ArgumentParser(
     formatter_class=ArgumentDefaultsHelpFormatter,
     description="Optimize hyperparameters of metric learning using optuna.",
@@ -52,6 +68,8 @@ sys.path.append(os.path.dirname(args.model_def_fn))
 MODEL_DEF = import_module(os.path.basename(args.model_def_fn)[:-3])# remove ".py"
 
 def objective(trial):
+    trial = SubsetFixTrialWrapper(trial, CONF["_fix_params"])
+
     # Average results of multiple folds.
     print("New parameter.")
     metrics = []

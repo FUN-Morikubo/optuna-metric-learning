@@ -17,5 +17,8 @@
     "batch_size": 64,
 
     "": "Available loss_types: Contrastive, Triplet, ArcFace, ProxyNCA",
-    "loss_type": "Triplet"
+    "loss_type": "Contrastive",
+
+    "": "_fix_params is required for all configuration.",
+    "_fix_params": {"pos_margin": 0.7}
 }
