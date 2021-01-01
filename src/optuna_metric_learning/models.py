@@ -6,7 +6,7 @@ def sample_regularizer(trial):
         return {"embedding_regularizer": None, "embedding_reg_weight": None}
     elif reg_type == "Lp":
         p = trial.suggest_categorical("reg_p", [1, 2])
-        reg_weight = trial.suggest_loguniform("reg_weight", 1e-6, 1e2)
+        reg_weight = trial.suggest_loguniform("reg_weight", 1e-8, 1e-3)
         return {"embedding_regularizer": regularizers.LpRegularizer(p=p), 
             "embedding_reg_weight": reg_weight}
 
