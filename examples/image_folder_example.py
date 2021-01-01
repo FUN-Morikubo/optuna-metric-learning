@@ -26,7 +26,37 @@ def get(conf, trial):
     ]
     trans = transforms.Compose(trans)
 
-    trans_dict = {"train": trans, "valid": trans}
+    if conf["use_augmentation"]:
+        train_trans = [
+            transforms.Resize((224, 224)),
+            transforms.CenterCrop(224)
+        ]
+        
+        # Flip
+        if trial.suggest_categorical("augment_flip", [0,1]) > 0:
+            train_trans.append(transforms.RandomHorizontalFlip())
+        # Rotation, Shift, Scale
+        rot_degree = trial.suggest_uniform("augment_rot", 0.0, 180.0)
+        translate = trial.suggest_uniform("augment_trans", 0.0, 0.3)
+        scale = trial.suggest_uniform("augment_scale", 1.0, 1.3)
+        train_trans.append(transforms.RandomAffine(
+            rot_degree, translate=(translate, translate), scale=(1/scale, scale)))
+        # Erasing
+        if trial.suggest_categorical("augment_erase", [0,1]) > 0:
+            train_trans.append(transforms.RandomErasing())
+
+        train_trans += [
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
+        ]
+        train_trans = transforms.Compose(train_trans)
+    else:
+        train_trans = trans
+
+    trans_dict = {"train": train_trans, "valid": trans}
 
     # DATASET GENERATOR
     label_dirnames = glob(os.path.join(conf["data_dir"], "*"))
