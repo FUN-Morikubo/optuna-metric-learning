@@ -13,7 +13,7 @@ from torchvision.datasets import ImageFolder
 
 from optuna_metric_learning.models import ALL_LOSSES
 
-def get(conf, trial):
+def get(conf, trial, param_gen):
     # TRANSFORM
     trans = [
         transforms.Resize((224,224)),
@@ -33,12 +33,12 @@ def get(conf, trial):
         ]
         
         # Flip
-        if trial.suggest_categorical("augment_flip", [0,1]) > 0:
+        if param_gen.suggest_categorical("augment_flip", [0,1]) > 0:
             train_trans.append(transforms.RandomHorizontalFlip())
         # Rotation, Shift, Scale
-        rot_degree = trial.suggest_uniform("augment_rot", 0.0, 180.0)
-        translate = trial.suggest_uniform("augment_trans", 0.0, 0.3)
-        scale = trial.suggest_uniform("augment_scale", 1.0, 1.3)
+        rot_degree = param_gen.suggest_uniform("augment_rot", 0.0, 180.0)
+        translate = param_gen.suggest_uniform("augment_trans", 0.0, 0.3)
+        scale = param_gen.suggest_uniform("augment_scale", 1.0, 1.3)
         train_trans.append(transforms.RandomAffine(
             rot_degree, translate=(translate, translate), scale=(1/scale, scale)))
         
@@ -51,9 +51,9 @@ def get(conf, trial):
         ]
 
         # Erasing
-        if trial.suggest_categorical("augment_erase", [0,1]) > 0:
+        if param_gen.suggest_categorical("augment_erase", [0,1]) > 0:
             train_trans.append(transforms.RandomErasing())
-            
+
         train_trans = transforms.Compose(train_trans)
     else:
         train_trans = trans
@@ -81,7 +81,7 @@ def get(conf, trial):
             )
             train_sampler = samplers.MPerClassSampler(
                 labels=train_dataset.targets,
-                m = trial.suggest_categorical("m", conf["m_cands"]),
+                m = param_gen.suggest_categorical("m", conf["m_cands"]),
                 batch_size=conf["batch_size"],
                 length_before_new_iter=conf["data_per_epoch"]
             )
@@ -101,7 +101,7 @@ def get(conf, trial):
         trunk_output_size = trunk.fc.in_features
         trunk.fc = nn.Identity()
 
-        p_dropout = trial.suggest_uniform("p_dropout", 0.0, 1.0)
+        p_dropout = param_gen.suggest_uniform("p_dropout", 0.0, 1.0)
         embedder = nn.Sequential(
             nn.Linear(trunk_output_size, conf["dim"]),
             nn.Dropout(p_dropout)
@@ -112,11 +112,11 @@ def get(conf, trial):
 
         model_dict = {"trunk": trunk, "embedder": embedder}
 
-        lr = trial.suggest_loguniform("model_lr", 1e-5, 1e-2)
-        decay = trial.suggest_loguniform("model_decay", 1e-10, 1e-2)
-        # beta1 = 1. - trial.suggest_loguniform("model_beta1", 1e-3, 1.)
-        # beta2 = 1. - trial.suggest_loguniform("model_beta2", 1e-4, 1.)
-        # eps = trial.suggest_loguniform("model_eps", 1e-10, 1e-5)
+        lr = param_gen.suggest_loguniform("model_lr", 1e-5, 1e-2)
+        decay = param_gen.suggest_loguniform("model_decay", 1e-10, 1e-2)
+        # beta1 = 1. - param_gen.suggest_loguniform("model_beta1", 1e-3, 1.)
+        # beta2 = 1. - param_gen.suggest_loguniform("model_beta2", 1e-4, 1.)
+        # eps = param_gen.suggest_loguniform("model_eps", 1e-10, 1e-5)
         beta1 = 0.9
         beta2 = 0.999
         eps = 1e-8
@@ -136,14 +136,14 @@ def get(conf, trial):
         }
 
         loss_type = conf["loss_type"]
-        metric_loss_info = ALL_LOSSES[loss_type](trial,
+        metric_loss_info = ALL_LOSSES[loss_type](param_gen,
             num_classes=len(labels), embedding_size=conf["dim"])
         if "param" in metric_loss_info:
             # Add optimizer for loss
-            lr = trial.suggest_loguniform("loss_lr", 1e-5, 1e-2)
-            # beta1 = 1. - trial.suggest_loguniform("loss_beta1", 1e-3, 1.)
-            # beta2 = 1. - trial.suggest_loguniform("loss_beta2", 1e-4, 1.)
-            # eps = trial.suggest_loguniform("loss_eps", 1e-10, 1e-5)
+            lr = param_gen.suggest_loguniform("loss_lr", 1e-5, 1e-2)
+            # beta1 = 1. - param_gen.suggest_loguniform("loss_beta1", 1e-3, 1.)
+            # beta2 = 1. - param_gen.suggest_loguniform("loss_beta2", 1e-4, 1.)
+            # eps = param_gen.suggest_loguniform("loss_eps", 1e-10, 1e-5)
             beta1 = 0.9
             beta2 = 0.999
             eps = 1e-8

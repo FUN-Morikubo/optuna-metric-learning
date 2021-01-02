@@ -14,21 +14,7 @@ from pytorch_metric_learning.utils import common_functions
 import pytorch_metric_learning.utils.logging_presets as logging_presets
 from radam import RAdam
 
-class SubsetFixTrialWrapper(): 
-    def __init__(self, trial, fix_params): 
-        self._OML_fix_params = fix_params 
-        self._OML_trial = trial 
-     
-    def __getattr__(self, func_name): 
-        if func_name.startswith("suggest"): 
-            def _tmp(name, *args): 
-                if name in self._OML_fix_params: 
-                    return self._OML_trial.suggest_categorical(name, [self._OML_fix_params[name]]) 
-                else: 
-                    return getattr(self._OML_trial, func_name)(name, *args) 
-            return _tmp 
-        else: 
-            return getattr(self._OML_trial, func_name) 
+from optuna_metric_learning.misc import ParameterGenerator
 
 parser = ArgumentParser(
     formatter_class=ArgumentDefaultsHelpFormatter,
@@ -68,12 +54,12 @@ sys.path.append(os.path.dirname(args.model_def_fn))
 MODEL_DEF = import_module(os.path.basename(args.model_def_fn)[:-3])# remove ".py"
 
 def objective(trial):
-    trial = SubsetFixTrialWrapper(trial, CONF["_fix_params"])
+    param_gen = ParameterGenerator(trial, CONF["_fix_params"], logger=logger)
 
     # Average results of multiple folds.
     print("New parameter.")
     metrics = []
-    constructors = MODEL_DEF.get(CONF, trial)
+    constructors = MODEL_DEF.get(CONF, trial, param_gen)
     for i_fold, (train_dataset, dev_dataset, train_sampler, batch_size) in enumerate(constructors["fold_generator"]()):
         print(f"Fold {i_fold}")
         model, optimizer, loss = constructors["modules"]()

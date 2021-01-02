@@ -20,7 +20,9 @@
     "loss_type": "Contrastive",
 
     "": "_fix_params is required for all configuration.",
-    "_fix_params": {},
+    "_fix_params": {"m": 16, "model_decay": 0.0000290147, 
+        "model_lr": 0.0000401253, "neg_margin": 1.04214,
+        "dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None"},
 
     "use_augmentation": true
 }

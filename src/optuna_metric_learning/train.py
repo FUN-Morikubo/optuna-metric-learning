@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from glob import glob
 from importlib import import_module
 import json
+import logging
 import os
 import shutil
 import sys
@@ -10,6 +11,8 @@ import optuna
 from pytorch_metric_learning import trainers, testers
 from pytorch_metric_learning.utils import common_functions
 import pytorch_metric_learning.utils.logging_presets as logging_presets
+
+from optuna_metric_learning.misc import ParameterGenerator
 
 parser = ArgumentParser()
 
@@ -41,9 +44,13 @@ sys.path.append(os.path.dirname(args.model_def_fn))
 MODEL_DEF = import_module(os.path.basename(args.model_def_fn)[:-3])
 
 # Load best parameter
+if args.db_name is None:
+    _storage_fn = f"sqlite:///{args.log_dir}/optuna.sqlite3".replace("/", os.path.sep)
+else:
+    _storage_fn = args.db_name
 study = optuna.load_study(
     study_name=args.study_name,
-    storage=args.db_name
+    storage=_storage_fn
 )
 if args.trial < 0:
     best_trial = study.best_trial
@@ -55,7 +62,10 @@ else:
 print("Use following best parameter:")
 print(best_params)
 
-constructors = MODEL_DEF.get(CONF, best_trial)
+param_gen = ParameterGenerator(best_trial, 
+    CONF["_fix_params"], logger=logging.getLogger())
+
+constructors = MODEL_DEF.get(CONF, best_trial, param_gen)
 
 train_dataset, dev_dataset, train_sampler, batch_size = \
     next(constructors["fold_generator"]())
