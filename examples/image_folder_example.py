@@ -41,10 +41,7 @@ def get(conf, trial):
         scale = trial.suggest_uniform("augment_scale", 1.0, 1.3)
         train_trans.append(transforms.RandomAffine(
             rot_degree, translate=(translate, translate), scale=(1/scale, scale)))
-        # Erasing
-        if trial.suggest_categorical("augment_erase", [0,1]) > 0:
-            train_trans.append(transforms.RandomErasing())
-
+        
         train_trans += [
             transforms.ToTensor(),
             transforms.Normalize(
@@ -52,6 +49,11 @@ def get(conf, trial):
                 std=[0.229, 0.224, 0.225]
             )
         ]
+
+        # Erasing
+        if trial.suggest_categorical("augment_erase", [0,1]) > 0:
+            train_trans.append(transforms.RandomErasing())
+            
         train_trans = transforms.Compose(train_trans)
     else:
         train_trans = trans
