@@ -151,7 +151,7 @@ if args.sampler == "Default":
     sampler = None
 elif args.sampler == "Random":
     sampler = optuna.samplers.RandomSampler()
-elif args.sample == "Grid":
+elif args.sampler == "Grid":
     sampler = optuna.samplers.GridSampler(CONF["search_space"])
 
 study = optuna.create_study(
