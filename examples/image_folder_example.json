@@ -22,7 +22,13 @@
     "": "_fix_params is required for all configuration.",
     "_fix_params": {"m": 16, "model_decay": 0.0000290147, 
         "model_lr": 0.0000401253, "neg_margin": 1.04214,
-        "dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None"},
+        "p_dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None"},
 
-    "use_augmentation": true
+    "use_augmentation": false,
+    "use_randaug": true,
+
+    "search_space": {
+        "randaug_N": [0,1,2,3],
+        "randaug_M": [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]
+    }
 }

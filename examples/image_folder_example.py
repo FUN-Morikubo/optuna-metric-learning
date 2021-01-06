@@ -5,6 +5,7 @@ import re
 import numpy as np
 from pytorch_metric_learning import samplers
 from radam import RAdam
+from RandAugment import RandAugment
 from sklearn.model_selection import KFold
 import torch
 import torch.nn as nn
@@ -55,6 +56,17 @@ def get(conf, trial, param_gen):
             train_trans.append(transforms.RandomErasing())
 
         train_trans = transforms.Compose(train_trans)
+    elif conf["use_randaug"]:
+        _N = param_gen.suggest_int("randaug_N", 0, 10)
+        _M = param_gen.suggest_int("randaug_M", 0, 30)
+        train_trans = [
+            RandAugment(_N, _M),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
+        ]
     else:
         train_trans = trans
 
