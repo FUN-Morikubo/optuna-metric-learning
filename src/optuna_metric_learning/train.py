@@ -112,5 +112,6 @@ best_trunk = glob(os.path.join(model_dir, "trunk_best*.pth"))[0]
 
 shutil.copy(best_embedder, os.path.join(args.model_save_dir, "embedder.pth"))
 shutil.copy(best_trunk, os.path.join(args.model_save_dir, "trunk.pth"))
+best_params.update(CONF["_fix_params"])
 with open(os.path.join(args.model_save_dir, "conf.json"), "w") as h:
     json.dump([CONF, best_params], h)
