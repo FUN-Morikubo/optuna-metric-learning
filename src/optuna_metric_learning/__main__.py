@@ -37,6 +37,11 @@ parser.add_argument("--db-name", type=str, default=None,
     help="Database to store results of each trials. If None, sqlite3 database file,`optuna.sqlite3` will be created at --log-dir.")
 parser.add_argument("--study-name", type=str, default="metric_learning", help="Study name.")
 
+parser.add_argument("--ignore-error", action="store_true", help="If this option is set, restart training from last epoch when any error occurs during a trial.")
+
+parser.add_argument("--n-train-loader", type=int, default=4)
+parser.add_argument("--n-test-loader", type=int, default=4)
+
 args = parser.parse_args()
 
 os.makedirs(args.log_dir, exist_ok=True)
@@ -74,7 +79,7 @@ def objective(trial):
         # tester
         tester = testers.GlobalEmbeddingSpaceTester(
             end_of_testing_hook=hooks.end_of_testing_hook,
-            dataloader_num_workers=32
+            dataloader_num_workers=args.n_test_loader
         )
         end_of_epoch_hook = hooks.end_of_epoch_hook(
             tester, {"val": dev_dataset},
@@ -83,15 +88,54 @@ def objective(trial):
             patience=args.patience
         )
 
+        CHECKPOINT_FN = os.path.join(args.log_dir, f"trial_{trial.number}_{i_fold}_last.pth")
+        def actual_end_of_epoch_hook(trainer):
+            continue_training = end_of_epoch_hook(trainer)
+
+            torch.save(
+                (
+                    {k:m.state_dict() for k,m in trainer.models.items()},
+                    {k:m.state_dict() for k,m in trainer.optimizers.items()},
+                    {k:m.state_dict() for k,m in trainer.loss_funcs.items()},
+                    trainer.epoch
+                ),
+                CHECKPOINT_FN
+            )
+
+            return continue_training
+        
+
         # train
         trainer = trainers.MetricLossOnly(
             model, optimizer, batch_size, loss, 
             mining_funcs={}, dataset=train_dataset,
-            sampler=train_sampler, dataloader_num_workers=32,
+            sampler=train_sampler, dataloader_num_workers=args.n_train_loader,
             end_of_iteration_hook=hooks.end_of_iteration_hook,
-            end_of_epoch_hook=end_of_epoch_hook
+            end_of_epoch_hook=actual_end_of_epoch_hook
         )
-        trainer.train(num_epochs=args.max_epoch)
+
+        while True:
+            start_epoch = 1
+            if os.path.exists(CHECKPOINT_FN):
+                model_dicts, optimizer_dicts, loss_dicts, last_epoch = \
+                    torch.load(CHECKPOINT_FN)
+                for k,d in model_dicts.items():
+                    trainer.models[k].load_state_dict(d)
+                for k,d in optimizer_dicts.items():
+                    trainer.optimizers[k].load_state_dict(d)
+                for k,d in loss_dicts.items():
+                    trainer.loss_funcs[k].load_state_dict(d)
+                start_epoch = last_epoch + 1
+
+                logger.critical(f"Start from old epoch: {last_epoch + 1}")
+            try:
+                trainer.train(num_epochs=args.max_epoch, start_epoch=start_epoch)
+            except Exception as err:
+                logger.critical(f"Error: {err}")
+                if not args.ignore_error:
+                    break
+            else:
+                break
 
         rslt = hooks.get_accuracy_history(tester, "val", metrics=["mean_average_precision_at_r"])
         
