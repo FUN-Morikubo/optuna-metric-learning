@@ -67,6 +67,7 @@ def get(conf, trial, param_gen):
                 std=[0.229, 0.224, 0.225]
             )
         ]
+        train_trans = transforms.Compose(train_trans)
     else:
         train_trans = trans
 
