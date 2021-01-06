@@ -5,7 +5,7 @@ requirements=[
     "optuna",
     "pytorch-metric-learning",
     "radam @ git+https://github.com/LiyuanLucasLiu/RAdam.git",
-    "RandAugment @ git+https://github.com/ildoonet/pytorch-randaugment.git"
+    "RandAugment @ git+https://github.com/ildoonet/pytorch-randaugment.git",
     "sklearn",
     "torch",
     "torchvision",
