@@ -134,6 +134,8 @@ def objective(trial):
                 logger.critical(f"Error: {err}")
                 if not args.ignore_error:
                     break
+                else:
+                    raise err
             else:
                 break
 
