@@ -10,6 +10,7 @@
     "n_fold": 4,
     "fold_trials": 2,
 
+    "": "Root directory of your dataset.",
     "data_dir": "/data_ssd/reid_dataset",
     "data_per_epoch": 100000,
 
@@ -19,16 +20,18 @@
     "": "Available loss_types: Contrastive, Triplet, ArcFace, ProxyNCA",
     "loss_type": "Contrastive",
 
-    "": "_fix_params is required for all configuration.",
+    "": "You can fix parameters as follows.",
     "_fix_params": {"m": 16, "model_decay": 0.0000290147, 
         "model_lr": 0.0000401253, "neg_margin": 1.04214,
         "p_dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None"},
 
     "use_augmentation": false,
+    "": "You can introduce RandAugment by this option.",
     "use_randaug": true,
 
+    "": "You can specify search space of grid search. This search space is used only by grid search.",
     "search_space": {
-        "randaug_N": [0,1,2,3],
-        "randaug_M": [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]
+        "randaug_N": [1,2],
+        "randaug_M": [2,6,10,14,18,22,26,30]
     }
 }
