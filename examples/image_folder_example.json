@@ -10,6 +10,7 @@
     "n_fold": 4,
     "fold_trials": 2,
 
+    "": "Root directory of your dataset.",
     "data_dir": "/data_ssd/reid_dataset",
     "data_per_epoch": 100000,
 
@@ -24,8 +25,10 @@
         "p_dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None", "randaug_N": 1, "randaug_M": 26},
 
     "use_augmentation": false,
+    "": "You can introduce RandAugment by this option.",
     "use_randaug": true,
 
+    "": "You can specify search space of grid search. This search space is used only by grid search.",
     "search_space": {
     }
 }
