@@ -3,7 +3,7 @@
         "Available trunk_models:",
         "ResNet-18, ResNet-34, ResNet-50, ResNet-101, ResNet-152"
     ],
-    "trunk_model": "ResNet-18",
+    "trunk_model": "ResNet-152",
     "dim": 500,
 
     "": "Split dataset into n_fold folds, and only use fold_trials folds during a trial.",
@@ -20,15 +20,12 @@
     "loss_type": "Contrastive",
 
     "": "_fix_params is required for all configuration.",
-    "_fix_params": {"m": 16, "model_decay": 0.0000290147, 
-        "model_lr": 0.0000401253, "neg_margin": 1.04214,
-        "p_dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None"},
+    "_fix_params": {"m": 16, "neg_margin": 1.04214,
+        "p_dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None", "randaug_N": 1, "randaug_M": 26},
 
     "use_augmentation": false,
     "use_randaug": true,
 
     "search_space": {
-        "randaug_N": [0,1,2,3],
-        "randaug_M": [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]
     }
 }
