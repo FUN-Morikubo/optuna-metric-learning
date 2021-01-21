@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 from torchvision import transforms, models
 from torchvision.datasets import ImageFolder
+import timm
 
 from optuna_metric_learning.models import ALL_LOSSES
 
@@ -111,8 +112,13 @@ def get(conf, trial, param_gen):
         if conf["trunk_model"] in ["ResNet-18", "ResNet-34", "ResNet-50", "ResNet-101", "ResNet-152"]:
             depth = re.match("ResNet-(?P<depth>[0-9]+)", conf["trunk_model"]).group("depth")
             trunk = eval(f"models.resnet{depth}(pretrained=True)")
-        trunk_output_size = trunk.fc.in_features
-        trunk.fc = nn.Identity()
+            trunk_output_size = trunk.fc.in_features
+            trunk.fc = nn.Identity()
+        elif conf["trunk_model"].startswith("timm:"):
+            _model_name = conf["trunk_model"].lstrip("timm:")
+            trunk = timm.create_model(_model_name, pretrained=True)
+            trunk.reset_classifier(0)
+            trunk_output_size = trunk.num_features
 
         p_dropout = param_gen.suggest_uniform("p_dropout", 0.0, 1.0)
         embedder = nn.Sequential(
@@ -125,7 +131,7 @@ def get(conf, trial, param_gen):
 
         model_dict = {"trunk": trunk, "embedder": embedder}
 
-        lr = param_gen.suggest_loguniform("model_lr", 1e-5, 1e-2)
+        lr = param_gen.suggest_loguniform("model_lr", 1e-6, 1e-2)
         decay = param_gen.suggest_loguniform("model_decay", 1e-10, 1e-2)
         # beta1 = 1. - param_gen.suggest_loguniform("model_beta1", 1e-3, 1.)
         # beta2 = 1. - param_gen.suggest_loguniform("model_beta2", 1e-4, 1.)

@@ -1,9 +1,12 @@
 {
     "": [
         "Available trunk_models:",
-        "ResNet-18, ResNet-34, ResNet-50, ResNet-101, ResNet-152"
+        "ResNet-18, ResNet-34, ResNet-50, ResNet-101, ResNet-152",
+        "You can also use models in pytorch-image-models",
+        "timm:<model name of pytorch-image-models>",
+        "(e.g.) timm:vit_large_patch16_224"
     ],
-    "trunk_model": "ResNet-152",
+    "trunk_model": "timm:vit_large_patch16_224",
     "dim": 500,
 
     "": "Split dataset into n_fold folds, and only use fold_trials folds during a trial.",
@@ -15,7 +18,7 @@
     "data_per_epoch": 100000,
 
     "m_cands": [2, 4, 8, 16],
-    "batch_size": 64,
+    "batch_size": 32,
 
     "": "Available loss_types: Contrastive, Triplet, ArcFace, ProxyNCA",
     "loss_type": "Contrastive",

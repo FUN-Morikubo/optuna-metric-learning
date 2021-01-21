@@ -11,7 +11,8 @@ requirements=[
     "torchvision",
     "record-keeper",
     "tensorboard",
-    "faiss-cpu"
+    "faiss-cpu",
+    "timm"
 ]
 
 setup(
