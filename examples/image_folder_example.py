@@ -16,10 +16,12 @@ import timm
 from optuna_metric_learning.models import ALL_LOSSES
 
 def get(conf, trial, param_gen):
+    SIZE = conf["input_size"] = 256
+
     # TRANSFORM
     trans = [
-        transforms.Resize((224,224)),
-        transforms.CenterCrop(224),
+        transforms.Resize((SIZE,SIZE)),
+        transforms.CenterCrop(SIZE),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406],
@@ -30,8 +32,8 @@ def get(conf, trial, param_gen):
 
     if conf["use_augmentation"]:
         train_trans = [
-            transforms.Resize((224, 224)),
-            transforms.CenterCrop(224)
+            transforms.Resize((SIZE, SIZE)),
+            transforms.CenterCrop(SIZE)
         ]
         
         # Flip
@@ -61,6 +63,8 @@ def get(conf, trial, param_gen):
         _N = param_gen.suggest_int("randaug_N", 0, 10)
         _M = param_gen.suggest_int("randaug_M", 0, 30)
         train_trans = [
+            transforms.Resize((SIZE, SIZE)),
+            transforms.CenterCrop(SIZE),
             RandAugment(_N, _M),
             transforms.ToTensor(),
             transforms.Normalize(
@@ -115,7 +119,7 @@ def get(conf, trial, param_gen):
             trunk_output_size = trunk.fc.in_features
             trunk.fc = nn.Identity()
         elif conf["trunk_model"].startswith("timm:"):
-            _model_name = conf["trunk_model"].lstrip("timm:")
+            _model_name = conf["trunk_model"][5:]
             trunk = timm.create_model(_model_name, pretrained=True)
             trunk.reset_classifier(0)
             trunk_output_size = trunk.num_features
@@ -131,7 +135,7 @@ def get(conf, trial, param_gen):
 
         model_dict = {"trunk": trunk, "embedder": embedder}
 
-        lr = param_gen.suggest_loguniform("model_lr", 1e-6, 1e-2)
+        lr = param_gen.suggest_loguniform("model_lr", 1e-6, 1e-3)
         decay = param_gen.suggest_loguniform("model_decay", 1e-10, 1e-2)
         # beta1 = 1. - param_gen.suggest_loguniform("model_beta1", 1e-3, 1.)
         # beta2 = 1. - param_gen.suggest_loguniform("model_beta2", 1e-4, 1.)

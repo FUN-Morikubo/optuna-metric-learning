@@ -12,7 +12,7 @@ requirements=[
     "record-keeper",
     "tensorboard",
     "faiss-cpu",
-    "timm"
+    "timm @ git+https://github.com/rwightman/pytorch-image-models.git"
 ]
 
 setup(
