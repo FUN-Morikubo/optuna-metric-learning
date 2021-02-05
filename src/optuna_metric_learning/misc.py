@@ -13,7 +13,11 @@ class ParameterGenerator():
                     self.logger.critical(f"Fix parameter for {name}: {val}")
                     return val
                 else: 
-                    val = getattr(self.trial, func_name)(name, *args) 
+                    try:
+                        val = getattr(self.trial, func_name)(name, *args) 
+                    except Exception as err:
+                        print(f"Error while loading parameter: {name}")
+                        raise err
                     self.logger.critical(f"Sample parameter for {name}: {val}")
                     return val
             return _tmp 

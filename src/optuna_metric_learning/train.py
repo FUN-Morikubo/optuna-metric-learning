@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from glob import glob
 from importlib import import_module
 import json
@@ -14,13 +14,19 @@ import pytorch_metric_learning.utils.logging_presets as logging_presets
 
 from optuna_metric_learning.misc import ParameterGenerator
 
-parser = ArgumentParser()
+parser = ArgumentParser(
+    formatter_class=ArgumentDefaultsHelpFormatter,
+    description="Train a metric learning model with tuned parameters.",
+    add_help=True
+)
 
 parser.add_argument("--conf", type=str, required=True, help="Configuration file.")
 parser.add_argument("--model-def-fn", type=str, required=True, help="Model definition file.")
 
+parser.add_argument("--no-trial", action="store_true", help="If you select this option, no trial will be loaded, and parameters specified in the config file will be used.")
+
 parser.add_argument("--log-dir", type=str, default="./optuna_metric_learning", help="Directory name to save logging information.")
-parser.add_argument("--db-name", type=str, required=True, 
+parser.add_argument("--db-name", type=str, default=None, 
     help="Database to store results of each trials. If None, sqlite3 database file,`optuna.sqlite3` will be created at --log-dir.")
 parser.add_argument("--study-name", type=str, default="metric_learning", help="Study name.")
 parser.add_argument("--model-save-dir", type=str, required=True)
@@ -30,7 +36,7 @@ parser.add_argument("--patience", type=int, default=1)
 
 parser.add_argument("--n-fold", type=int, default=10)
 
-parser.add_argument("--trial", type=int, default=-1)
+parser.add_argument("--trial", type=int, default=-1, help="Explicitly select trial number which will be used for training. Otherwise, best trial will be used.")
 
 args = parser.parse_args()
 
@@ -44,26 +50,33 @@ sys.path.append(os.path.dirname(args.model_def_fn))
 MODEL_DEF = import_module(os.path.basename(args.model_def_fn)[:-3])
 
 # Load best parameter
-if args.db_name is None:
-    _storage_fn = f"sqlite:///{args.log_dir}/optuna.sqlite3".replace("/", os.path.sep)
-else:
-    _storage_fn = args.db_name
-study = optuna.load_study(
-    study_name=args.study_name,
-    storage=_storage_fn
-)
-if args.trial < 0:
-    best_trial = study.best_trial
-    best_params = study.best_params
-else:
-    best_trial = study.trials[args.trial]
-    best_params = best_trial.params
+if args.no_trial:
+    print("No trial is loaded.")
 
-print("Use following best parameter:")
-print(best_params)
+    param_gen = ParameterGenerator(None, CONF["_fix_params"], logger=logging.getLogger())
+    best_params = {}
+    best_trial = None
+else:
+    if args.db_name is None:
+        _storage_fn = f"sqlite:///{args.log_dir}/optuna.sqlite3".replace("/", os.path.sep)
+    else:
+        _storage_fn = args.db_name
+    study = optuna.load_study(
+        study_name=args.study_name,
+        storage=_storage_fn
+    )
+    if args.trial < 0:
+        best_trial = study.best_trial
+        best_params = study.best_params
+    else:
+        best_trial = study.trials[args.trial]
+        best_params = best_trial.params
 
-param_gen = ParameterGenerator(best_trial, 
-    CONF["_fix_params"], logger=logging.getLogger())
+    print("Use following best parameter:")
+    print(best_params)
+
+    param_gen = ParameterGenerator(best_trial, 
+        CONF["_fix_params"], logger=logging.getLogger())
 
 constructors = MODEL_DEF.get(CONF, best_trial, param_gen)
 
