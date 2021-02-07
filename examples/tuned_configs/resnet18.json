@@ -15,7 +15,7 @@
     "fold_trials": 2,
 
     "": "Root directory of your dataset.",
-    "data_dir": "/data_ssd/reid_dataset",
+    "data_dir": "/data_ssd/reid_dataset_danbooru",
     "data_per_epoch": 100000,
 
     "m_cands": [2, 4, 8, 16],
@@ -25,8 +25,9 @@
     "loss_type": "Contrastive",
 
     "": "_fix_params is required for all configuration.",
-    "_fix_params": {"m": 8, "neg_margin": 1.04214,
-        "p_dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None", "randaug_N": 1, "randaug_M": 26},
+    "_fix_params": {"m": 8, "neg_margin": 1.04214, "p_dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None", 
+        "model_decay": 0.0000290147, "model_lr": 0.0000401253, "model_beta1": 0.1, "model_beta2": 0.001, "model_eps": 1e-8,
+        "randaug_N": 1, "randaug_M": 26},
 
     "use_augmentation": false,
     "": "You can introduce RandAugment by this option.",

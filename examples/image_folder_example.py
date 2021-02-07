@@ -16,7 +16,7 @@ import timm
 from optuna_metric_learning.models import ALL_LOSSES
 
 def get(conf, trial, param_gen):
-    SIZE = conf["input_size"] = 256
+    SIZE = conf["input_size"]
 
     # TRANSFORM
     trans = [
@@ -135,14 +135,15 @@ def get(conf, trial, param_gen):
 
         model_dict = {"trunk": trunk, "embedder": embedder}
 
-        lr = param_gen.suggest_loguniform("model_lr", 1e-6, 1e-3)
+        #lr = param_gen.suggest_loguniform("model_lr", 1e-5, 1e-3)
+        # beta1 = 0.9
+        # beta2 = 0.999
+        # eps = 1e-8
         decay = param_gen.suggest_loguniform("model_decay", 1e-10, 1e-2)
-        # beta1 = 1. - param_gen.suggest_loguniform("model_beta1", 1e-3, 1.)
-        # beta2 = 1. - param_gen.suggest_loguniform("model_beta2", 1e-4, 1.)
-        # eps = param_gen.suggest_loguniform("model_eps", 1e-10, 1e-5)
-        beta1 = 0.9
-        beta2 = 0.999
-        eps = 1e-8
+        lr = param_gen.suggest_loguniform("model_lr", 1e-5, 1e-3)
+        beta1 = 1. - param_gen.suggest_loguniform("model_beta1", 1e-3, 1.)
+        beta2 = 1. - param_gen.suggest_loguniform("model_beta2", 1e-4, 1.)
+        eps = param_gen.suggest_loguniform("model_eps", 1e-8, 1)
         optim_dict = {
             "trunk_optimizer": RAdam(trunk.parameters(), 
                     lr=lr, 
