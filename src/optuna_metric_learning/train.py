@@ -31,6 +31,9 @@ parser.add_argument("--db-name", type=str, default=None,
 parser.add_argument("--study-name", type=str, default="metric_learning", help="Study name.")
 parser.add_argument("--model-save-dir", type=str, required=True)
 
+parser.add_argument("--trainer", type=str, choices=["MetricLossOnly", "TrainWithClassifier"],
+    default="MetricLossOnly")
+
 parser.add_argument("--max-epoch", type=int, default=30)
 parser.add_argument("--patience", type=int, default=1)
 
@@ -82,7 +85,7 @@ constructors = MODEL_DEF.get(CONF, best_trial, param_gen)
 
 train_dataset, dev_dataset, train_sampler, batch_size = \
     next(constructors["fold_generator"]())
-model, optimizer, loss = constructors["modules"]()
+trainer_kwargs = constructors["modules"]()
 
 # logging
 record_keeper, _, _ = logging_presets.get_record_keeper(
@@ -104,13 +107,24 @@ end_of_epoch_hook = hooks.end_of_epoch_hook(
 )
 
 # train
-trainer = trainers.MetricLossOnly(
-    model, optimizer, batch_size, loss, 
-    mining_funcs={}, dataset=train_dataset,
-    sampler=train_sampler, dataloader_num_workers=32,
-    end_of_iteration_hook=hooks.end_of_iteration_hook,
-    end_of_epoch_hook=end_of_epoch_hook
-)
+if args.trainer == "MetricLossOnly":
+    trainer = trainers.MetricLossOnly(
+        batch_size=batch_size, 
+        mining_funcs={}, dataset=train_dataset,
+        sampler=train_sampler, dataloader_num_workers=32,
+        end_of_iteration_hook=hooks.end_of_iteration_hook,
+        end_of_epoch_hook=end_of_epoch_hook,
+        **trainer_kwargs
+    )
+elif args.trainer == "TrainWithClassifier":
+    trainer = trainers.TrainWithClassifier(
+        batch_size=batch_size,
+        mining_funcs={}, dataset=train_dataset,
+        sampler=train_sampler, dataloader_num_workers=32,
+        end_of_iteration_hook=hooks.end_of_iteration_hook,
+        end_of_epoch_hook=end_of_epoch_hook,
+        **trainer_kwargs
+    )
 trainer.train(num_epochs=args.max_epoch)
 
 rslt = hooks.get_accuracy_history(tester, "val", metrics=["mean_average_precision_at_r"])

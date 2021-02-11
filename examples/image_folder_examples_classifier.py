@@ -130,17 +130,20 @@ def get(conf, trial, param_gen):
             nn.Dropout(p_dropout)
         )
 
+        classifier = nn.Linear(conf["dim"], len(labels))
+
         trunk.to("cuda")
         embedder.to("cuda")
+        classifier.to("cuda")
 
-        model_dict = {"trunk": trunk, "embedder": embedder}
+        model_dict = {"trunk": trunk, "embedder": embedder, "classifier": classifier}
 
         #lr = param_gen.suggest_loguniform("model_lr", 1e-5, 1e-3)
         # beta1 = 0.9
         # beta2 = 0.999
         # eps = 1e-8
         decay = param_gen.suggest_loguniform("model_decay", 1e-10, 1e-2)
-        lr = param_gen.suggest_loguniform("model_lr", 1e-5, 1e-3)
+        lr = param_gen.suggest_loguniform("model_lr", 1e-5, 1e-4)
         beta1 = 1. - param_gen.suggest_loguniform("model_beta1", 1e-3, 1.)
         beta2 = 1. - param_gen.suggest_loguniform("model_beta2", 1e-4, 1.)
         eps = param_gen.suggest_loguniform("model_eps", 1e-8, 1)
@@ -156,7 +159,13 @@ def get(conf, trial, param_gen):
                     weight_decay=decay,
                     betas=(beta1, beta2),
                     eps=eps
-                    )
+                    ),
+            "classifier_optimizer": RAdam(classifier.parameters(),
+                    lr=lr, 
+                    weight_decay=decay,
+                    betas=(beta1, beta2),
+                    eps=eps
+                )
         }
 
         loss_type = conf["loss_type"]
@@ -175,13 +184,18 @@ def get(conf, trial, param_gen):
                 lr=lr, betas=(beta1, beta2), eps=eps)
             optim_dict["metric_loss_optimizer"] = opt
         loss_dict = {
-            "metric_loss": metric_loss_info["loss"]
+            "metric_loss": metric_loss_info["loss"],
+            "classifier_loss": torch.nn.CrossEntropyLoss()
         }
+
+        cls_weight = param_gen.suggest_loguniform("cls_weight", 0.01, 100.0)
+        loss_weights = {"metric_loss": 1, "classifier_loss": cls_weight}
 
         return {
             "models": model_dict,
             "optimizers": optim_dict,
-            "loss_funcs": loss_dict
+            "loss_funcs": loss_dict,
+            "loss_weights": loss_weights
         }
         
     return {"modules": model_generator, "fold_generator": dataset_fold_generator}

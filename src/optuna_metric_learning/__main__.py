@@ -31,6 +31,8 @@ parser.add_argument("--n-trials", type=int, default=100, help="Number of trials.
 
 parser.add_argument("--sampler", type=str, choices=["Default", "Random", "Grid"], 
     default="Default", help="Optuna sampler.")
+parser.add_argument("--trainer", type=str, choices=["MetricLossOnly", "TrainWithClassifier"],
+    default="MetricLossOnly")
 
 parser.add_argument("--log-dir", type=str, default="./optuna_metric_learning", help="Directory name to save logging information. NOTE: Use an unique name for each different optimization.")
 parser.add_argument("--db-name", type=str, default=None, 
@@ -67,7 +69,7 @@ def objective(trial):
     constructors = MODEL_DEF.get(CONF, trial, param_gen)
     for i_fold, (train_dataset, dev_dataset, train_sampler, batch_size) in enumerate(constructors["fold_generator"]()):
         print(f"Fold {i_fold}")
-        model, optimizer, loss = constructors["modules"]()
+        trainer_kwargs = constructors["modules"]()
 
         # logging
         record_keeper, _, _ = logging_presets.get_record_keeper(
@@ -106,13 +108,24 @@ def objective(trial):
         
 
         # train
-        trainer = trainers.MetricLossOnly(
-            model, optimizer, batch_size, loss, 
-            mining_funcs={}, dataset=train_dataset,
-            sampler=train_sampler, dataloader_num_workers=args.n_train_loader,
-            end_of_iteration_hook=hooks.end_of_iteration_hook,
-            end_of_epoch_hook=actual_end_of_epoch_hook
-        )
+        if args.trainer == "MetricLossOnly":
+            trainer = trainers.MetricLossOnly(
+                batch_size=batch_size, 
+                mining_funcs={}, dataset=train_dataset,
+                sampler=train_sampler, dataloader_num_workers=args.n_train_loader,
+                end_of_iteration_hook=hooks.end_of_iteration_hook,
+                end_of_epoch_hook=actual_end_of_epoch_hook,
+                **trainer_kwargs
+            )
+        elif args.trainer == "TrainWithClassifier":
+            trainer = trainers.TrainWithClassifier(
+                batch_size=batch_size,
+                mining_funcs={}, dataset=train_dataset,
+                sampler=train_sampler, dataloader_num_workers=args.n_train_loader,
+                end_of_iteration_hook=hooks.end_of_iteration_hook,
+                end_of_epoch_hook=actual_end_of_epoch_hook,
+                **trainer_kwargs
+            )
 
         while True:
             start_epoch = 1
