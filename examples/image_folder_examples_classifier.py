@@ -62,10 +62,12 @@ def get(conf, trial, param_gen):
     elif conf["use_randaug"]:
         _N = param_gen.suggest_int("randaug_N", 0, 10)
         _M = param_gen.suggest_int("randaug_M", 0, 30)
+        gray_p = param_gen.suggest_uniform("gray_p", 0.0, 1.0)
         train_trans = [
             transforms.Resize((SIZE, SIZE)),
             transforms.CenterCrop(SIZE),
             RandAugment(_N, _M),
+            transforms.RandomGrayscale(gray_p),
             transforms.ToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
@@ -130,7 +132,7 @@ def get(conf, trial, param_gen):
             nn.Dropout(p_dropout)
         )
 
-        classifier = nn.Linear(conf["dim"], len(labels))
+        classifier = nn.Linear(conf["dim"], len(labels), bias=False)
 
         trunk.to("cuda")
         embedder.to("cuda")
@@ -143,7 +145,8 @@ def get(conf, trial, param_gen):
         # beta2 = 0.999
         # eps = 1e-8
         decay = param_gen.suggest_loguniform("model_decay", 1e-10, 1e-2)
-        lr = param_gen.suggest_loguniform("model_lr", 1e-5, 1e-4)
+        #lr = param_gen.suggest_loguniform("model_lr", 1e-5, 1e-2)
+        lr = param_gen.suggest_loguniform("model_lr", 10**(-4.75), 10**(-3.75))
         beta1 = 1. - param_gen.suggest_loguniform("model_beta1", 1e-3, 1.)
         beta2 = 1. - param_gen.suggest_loguniform("model_beta2", 1e-4, 1.)
         eps = param_gen.suggest_loguniform("model_eps", 1e-8, 1)
@@ -188,7 +191,8 @@ def get(conf, trial, param_gen):
             "classifier_loss": torch.nn.CrossEntropyLoss()
         }
 
-        cls_weight = param_gen.suggest_loguniform("cls_weight", 0.01, 100.0)
+        #cls_weight = param_gen.suggest_loguniform("cls_weight", 0.01, 100.0)
+        cls_weight = param_gen.suggest_loguniform("cls_weight", 0.1, 1.0)
         loss_weights = {"metric_loss": 1, "classifier_loss": cls_weight}
 
         return {

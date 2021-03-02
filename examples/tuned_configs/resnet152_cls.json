@@ -1,0 +1,40 @@
+{
+    "": [
+        "Available trunk_models:",
+        "ResNet-18, ResNet-34, ResNet-50, ResNet-101, ResNet-152",
+        "You can also use models in pytorch-image-models",
+        "timm:<model name of pytorch-image-models>",
+        "(e.g.) timm:vit_large_patch16_224, timm:tf_efficientnet_b7"
+    ],
+    "trunk_model": "ResNet-152",
+    "dim": 500,
+    "input_size": 224,
+
+    "": "Split dataset into n_fold folds, and only use fold_trials folds during a trial.",
+    "n_fold": 4,
+    "fold_trials": 2,
+
+    "": "Root directory of your dataset.",
+    "data_dir": "/data_ssd/reid_dataset_danbooru",
+    "data_per_epoch": 100000,
+
+    "m_cands": [2, 4, 8, 16],
+    "batch_size": 64,
+
+    "": "Available loss_types: Contrastive, Triplet, ArcFace, ProxyNCA",
+    "loss_type": "Contrastive",
+
+    "": "_fix_params is required for all configuration.",
+    "_fix_params": {"m": 8, "neg_margin": 1.04214, "p_dropout": 0.367399, "pos_margin": 0.681566, "reg_type": "None", 
+        "model_decay": 1e-4, "model_lr": 8.2e-5, "model_beta1": 0.1, "model_beta2": 0.001, "model_eps": 1e-8,
+        "randaug_N": 1, "randaug_M": 26,
+        "cls_weight": 0.4, "gray_p": 0.0},
+
+    "use_augmentation": false,
+    "": "You can introduce RandAugment by this option.",
+    "use_randaug": true,
+
+    "": "You can specify search space of grid search. This search space is used only by grid search.",
+    "search_space": {
+    }
+}
