@@ -6,7 +6,7 @@ requirements=[
     "pytorch-metric-learning",
     "radam @ git+https://github.com/LiyuanLucasLiu/RAdam.git",
     "RandAugment @ git+https://github.com/ildoonet/pytorch-randaugment.git",
-    "sklearn",
+    # "scikit-learn",
     "torch",
     "torchvision",
     "record-keeper",
